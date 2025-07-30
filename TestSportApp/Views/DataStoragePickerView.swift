@@ -7,28 +7,6 @@
 
 import SwiftUI
 
-enum DataStorageType: Int, CaseIterable {
-    case all
-    case local
-    case remote
-    
-    var title: String {
-        switch self {
-        case .all: return "All"
-        case .local: return "Local"
-        case .remote: return "Remote"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .all: return .blue
-        case .local: return .green
-        case .remote: return .red
-        }
-    }
-}
-
 struct DataStoragePickerView: View {
     @Binding var selectedDataStorageType: DataStorageType
     

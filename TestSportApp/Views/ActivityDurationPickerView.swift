@@ -21,7 +21,7 @@ struct ActivityDurationPickerView: View {
     init(duration: Binding<Double>) {
         _duration = duration
         
-        let dateComponents = getDateComponentsFromDuration(duration.wrappedValue)
+        let dateComponents = ActivityDurationConverter.getDateComponentsFromDuration(duration.wrappedValue)
         
         selectedDay = dateComponents?.day ?? 0
         selectedHour = dateComponents?.hour ?? 0
@@ -51,7 +51,7 @@ struct ActivityDurationPickerView: View {
                             }
                         }
                         .onChange(of: selectedDay) { _, _ in
-                            duration = getDurationFromDateComponents() ?? 0.0
+                            updateDuration()
                         }
                         
                         Picker("Hour", selection: $selectedHour) {
@@ -60,7 +60,7 @@ struct ActivityDurationPickerView: View {
                             }
                         }
                         .onChange(of: selectedHour) { _, _ in
-                            duration = getDurationFromDateComponents() ?? 0.0
+                            updateDuration()
                         }
                         
                         Picker("Minute", selection: $selectedMinute) {
@@ -69,7 +69,7 @@ struct ActivityDurationPickerView: View {
                             }
                         }
                         .onChange(of: selectedMinute) { _, _ in
-                            duration = getDurationFromDateComponents() ?? 0.0
+                            updateDuration()
                         }
                     }
                     .pickerStyle(.wheel)
@@ -85,21 +85,8 @@ struct ActivityDurationPickerView: View {
 }
 
 private extension ActivityDurationPickerView {
-    func getDurationFromDateComponents() -> Double? {
-        let dateComponents = DateComponents(day: selectedDay, hour: selectedHour, minute: selectedMinute)
-        let calendar = Calendar.current
-        
-        guard let start = calendar.date(from: dateComponents) else { return nil }
-        guard let end = calendar.date(byAdding: dateComponents, to: start) else { return nil }
-        
-        return end.timeIntervalSince(start)
-    }
-    
-    func getDateComponentsFromDuration(_ duration: Double) -> DateComponents? {
-        let start = Date(timeIntervalSinceReferenceDate: 0)
-        let end = start.addingTimeInterval(duration)
-        
-        return Calendar.current.dateComponents([.day, .hour, .minute], from: start, to: end)
+    func updateDuration() {
+        duration = ActivityDurationConverter.getDurationFromDateComponents(day: selectedDay, hour: selectedHour, minute: selectedMinute) ?? 0.0
     }
 }
 

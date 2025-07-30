@@ -20,19 +20,23 @@ struct SportActivitiesView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(viewModel.sportActivities, id: \.id) { item in
+                    let rowColor: Color = DataStorageType(rawValue: item.dataStorageType)?.color ?? .clear
+                    
                     NavigationLink {
-                        Text("Detail name: \(item.activity)")
-                        // TODO: navvigate to detail
+                        SportActivityDetailView(modelContext: modelContext, sportActivity: item)
                     } label: {
+                        let duration = ActivityDurationConverter.getDateComponentsFromDuration(item.duration)
+                        
                         VStack(alignment: .leading, spacing: 8) {
                             Text(item.activity)
+                                .font(.headline)
                             Text(item.location)
-                            Text("Duration: \(item.duration)")
+                            Text("\(duration?.day ?? 0) d \(duration?.hour ?? 0) h \(duration?.minute ?? 0) m")
                         }
-                    }
+                    }.listRowBackground(rowColor)
                 }
                 .onDelete(perform: viewModel.deleteSportActivities)
             }
@@ -49,16 +53,27 @@ struct SportActivitiesView: View {
             .navigationTitle("Activities")
             .toolbar {
                 ToolbarItem {
-                    Button("Add") {
+                    Button {
                         isAddSportActivityViewPresented.toggle()
+                    } label: {
+                        Image(systemName: "plus")
                     }
                     .sheet(isPresented: $isAddSportActivityViewPresented) {
                         viewModel.fetchAllSportActivities()
                     } content: {
-                        AddSportActivityView(modelContext: modelContext)
+                        SportActivityDetailView(modelContext: modelContext)
                             .interactiveDismissDisabled(true)
                     }
 
+                }
+                ToolbarItem {
+                    Menu("Storage filter") {
+                        ForEach(DataStorageType.allCases, id: \.self) { dataStorageType in
+                            Button(dataStorageType.title) {
+                                viewModel.filterSportActivities(by: dataStorageType)
+                            }
+                        }
+                    }
                 }
             }
         }

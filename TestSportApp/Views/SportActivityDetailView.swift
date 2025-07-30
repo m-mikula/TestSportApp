@@ -8,13 +8,16 @@
 import SwiftData
 import SwiftUI
 
-struct AddSportActivityView: View {
+struct SportActivityDetailView: View {
     @Environment(\.dismiss) var dismiss
     
-    @StateObject private var viewModel: AddSportActivityViewModel
+    @StateObject private var viewModel: SportActivityDetailViewModel
     
-    init(modelContext: ModelContext) {
-        _viewModel = StateObject(wrappedValue: AddSportActivityViewModel(modelContext: modelContext))
+    init(
+        modelContext: ModelContext,
+        sportActivity: SportActivity? = nil
+    ) {
+        _viewModel = StateObject(wrappedValue: SportActivityDetailViewModel(modelContext: modelContext, sportActivity: sportActivity))
     }
     
     var body: some View {
@@ -41,13 +44,22 @@ struct AddSportActivityView: View {
                 .padding()
             }
             .toolbar {
-                Button("Save") {
-                    viewModel.saveActivity()
-                    dismiss()
+                if viewModel.type == .new {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Close") {
+                            dismiss()
+                        }
+                    }
                 }
-                .disabled(viewModel.isSaveDisabled)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(viewModel.type.saveButtonTitle) {
+                        viewModel.saveActivity()
+                        dismiss()
+                    }
+                    .disabled(viewModel.isSaveDisabled)
+                }
             }
-            .navigationTitle("Add new activity")
+            .navigationTitle(viewModel.type.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .scrollBounceBehavior(.basedOnSize)
         }
@@ -57,5 +69,5 @@ struct AddSportActivityView: View {
 #Preview {
     let modelContainer = LocalDataManager.getModelContainer()
     
-    AddSportActivityView(modelContext: modelContainer.mainContext)
+    SportActivityDetailView(modelContext: modelContainer.mainContext)
 }

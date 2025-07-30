@@ -26,6 +26,22 @@ final class SportActivitiesViewModel: ObservableObject {
         }
     }
     
+    func filterSportActivities(by dataStorageType: DataStorageType = .all) {
+        do {
+            let dataStorageTypeRawValue = dataStorageType.rawValue // Workaround - cannot use another type/entity in predicate
+            
+            sportActivities = try modelContext.fetch(
+                FetchDescriptor<SportActivity>(
+                    predicate: #Predicate { activity in
+                        activity.dataStorageType == dataStorageTypeRawValue
+                    }
+                )
+            )
+        } catch {
+            sportActivities = []
+        }
+    }
+    
     func deleteSportActivities(offsets: IndexSet) {
         for index in offsets {
             modelContext.delete(sportActivities[index])
