@@ -23,9 +23,9 @@ struct ActivityDurationPickerView: View {
         
         let dateComponents = ActivityDurationConverter.getDateComponentsFromDuration(duration.wrappedValue)
         
-        selectedDay = dateComponents?.day ?? 0
-        selectedHour = dateComponents?.hour ?? 0
-        selectedMinute = dateComponents?.minute ?? 0
+        _selectedDay = State(initialValue: dateComponents?.day ?? 0)
+        _selectedHour = State(initialValue: dateComponents?.hour ?? 0)
+        _selectedMinute = State(initialValue: dateComponents?.minute ?? 0)
     }
     
     var body: some View {
