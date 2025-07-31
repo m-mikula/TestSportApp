@@ -22,6 +22,14 @@ struct DataStoragePickerView: View {
                 }
             }
             .pickerStyle(.segmented)
+            
+            HStack(spacing: 8) {
+                ForEach(DataStorageType.allCases, id: \.self) { dataStorageType in
+                    RoundedRectangle(cornerRadius: 4)
+                        .frame(maxHeight: 24)
+                        .foregroundStyle(dataStorageType.color)
+                }
+            }
         }
     }
 }

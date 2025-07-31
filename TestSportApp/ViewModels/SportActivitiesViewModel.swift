@@ -11,12 +11,13 @@ import SwiftUI
 final class SportActivitiesViewModel: ObservableObject {
     private var modelContext: ModelContext
     
+    private(set) var selectedDataStorageType: DataStorageType = .all
+    @Published private(set) var sportActivities = [SportActivity]()
+    
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchAllSportActivities()
     }
-    
-    @Published private(set) var sportActivities = [SportActivity]()
     
     func fetchAllSportActivities() {
         do {
@@ -28,6 +29,7 @@ final class SportActivitiesViewModel: ObservableObject {
     
     func filterSportActivities(by dataStorageType: DataStorageType = .all) {
         do {
+            selectedDataStorageType = dataStorageType
             let dataStorageTypeRawValue = dataStorageType.rawValue // Workaround - cannot use another type/entity in predicate
             
             sportActivities = try modelContext.fetch(

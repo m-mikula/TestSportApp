@@ -20,8 +20,7 @@ enum SportActivityDetailViewType {
     
     var saveButtonTitle: String {
         switch self {
-        case .new: return "Save"
-        case .edit: return "Edit"
+        case .new, .edit: return "Save"
         }
     }
 }
@@ -66,7 +65,15 @@ final class SportActivityDetailViewModel: ObservableObject {
     @Published var dataStorageType: DataStorageType = .all
     
     var isSaveDisabled: Bool {
-        activity.isEmpty || location.isEmpty || duration == 0
+        switch type {
+        case .new:
+            return activity.isEmpty || location.isEmpty || duration == 0
+        case .edit:
+            return sportActivity.activity == activity &&
+                    sportActivity.location == location &&
+                    sportActivity.duration == duration &&
+                    sportActivity.dataStorageType == dataStorageType.rawValue
+        }
     }
     
     func saveActivity() {

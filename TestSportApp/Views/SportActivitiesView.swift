@@ -23,20 +23,26 @@ struct SportActivitiesView: View {
         NavigationStack {
             List {
                 ForEach(viewModel.sportActivities, id: \.id) { item in
-                    let rowColor: Color = DataStorageType(rawValue: item.dataStorageType)?.color ?? .clear
+                    let storageTypeColor: Color = DataStorageType(rawValue: item.dataStorageType)?.color ?? .clear
                     
                     NavigationLink {
                         SportActivityDetailView(modelContext: modelContext, sportActivity: item)
                     } label: {
                         let duration = ActivityDurationConverter.getDateComponentsFromDuration(item.duration)
                         
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(item.activity)
-                                .font(.headline)
-                            Text(item.location)
-                            Text("\(duration?.day ?? 0) d \(duration?.hour ?? 0) h \(duration?.minute ?? 0) m")
+                        HStack(spacing: 8) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .frame(width: 8)
+                                .foregroundStyle(storageTypeColor)
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(item.activity)
+                                    .font(.headline)
+                                Text(item.location)
+                                Text("\(duration?.day ?? 0) d \(duration?.hour ?? 0) h \(duration?.minute ?? 0) m")
+                            }
                         }
-                    }.listRowBackground(rowColor)
+                    }
                 }
                 .onDelete(perform: viewModel.deleteSportActivities)
             }
@@ -69,8 +75,14 @@ struct SportActivitiesView: View {
                 ToolbarItem {
                     Menu("Storage filter") {
                         ForEach(DataStorageType.allCases, id: \.self) { dataStorageType in
-                            Button(dataStorageType.title) {
+                            Button {
                                 viewModel.filterSportActivities(by: dataStorageType)
+                            } label: {
+                                if viewModel.selectedDataStorageType == dataStorageType {
+                                    Label(dataStorageType.title, systemImage: "checkmark")
+                                } else {
+                                    Text(dataStorageType.title)
+                                }
                             }
                         }
                     }
