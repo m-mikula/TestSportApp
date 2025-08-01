@@ -44,7 +44,7 @@ final class SportActivityDetailViewModel: ObservableObject {
             self.location = sportActivity.location
             self.duration = sportActivity.duration
             
-            self.dataStorageType = DataStorageType(rawValue: sportActivity.dataStorageType) ?? .all
+            self.dataStorageType = DataStorageType(rawValue: sportActivity.dataStorageType) ?? .local
             
             self.type = .edit
         } else {
@@ -52,7 +52,7 @@ final class SportActivityDetailViewModel: ObservableObject {
                 activity: "",
                 location: "",
                 duration: 0,
-                dataStorageType: DataStorageType.all.rawValue
+                dataStorageType: DataStorageType.local.rawValue
             )
             
             self.type = .new
@@ -62,7 +62,7 @@ final class SportActivityDetailViewModel: ObservableObject {
     @Published var activity: String = ""
     @Published var location: String = ""
     @Published var duration: Double = 0
-    @Published var dataStorageType: DataStorageType = .all
+    @Published var dataStorageType: DataStorageType = .local
     
     var isSaveDisabled: Bool {
         switch type {

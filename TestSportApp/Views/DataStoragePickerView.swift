@@ -35,5 +35,5 @@ struct DataStoragePickerView: View {
 }
 
 #Preview {
-    DataStoragePickerView(selectedDataStorageType: .constant(.all))
+    DataStoragePickerView(selectedDataStorageType: .constant(.local))
 }

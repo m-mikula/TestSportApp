@@ -90,7 +90,6 @@ private extension ActivityDurationPickerView {
     }
 }
 
-
 #Preview {
     ActivityDurationPickerView(duration: .constant(0.0))
 }

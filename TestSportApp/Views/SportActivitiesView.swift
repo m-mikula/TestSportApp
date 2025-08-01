@@ -74,14 +74,14 @@ struct SportActivitiesView: View {
                 }
                 ToolbarItem {
                     Menu("Storage filter") {
-                        ForEach(DataStorageType.allCases, id: \.self) { dataStorageType in
+                        ForEach(SportActivityFilterType.allCases, id: \.self) { filterType in
                             Button {
-                                viewModel.filterSportActivities(by: dataStorageType)
+                                viewModel.filterSportActivities(by: filterType)
                             } label: {
-                                if viewModel.selectedDataStorageType == dataStorageType {
-                                    Label(dataStorageType.title, systemImage: "checkmark")
+                                if viewModel.selectedFilterType == filterType {
+                                    Label(filterType.title, systemImage: "checkmark")
                                 } else {
-                                    Text(dataStorageType.title)
+                                    Text(filterType.title)
                                 }
                             }
                         }

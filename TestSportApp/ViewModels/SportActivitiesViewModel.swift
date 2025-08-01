@@ -8,10 +8,24 @@
 import SwiftData
 import SwiftUI
 
+enum SportActivityFilterType: Int, CaseIterable {
+    case all
+    case local
+    case remote
+    
+    var title: String {
+        switch self {
+        case .all: return "All"
+        case .local: return "Local"
+        case .remote: return "Remote"
+        }
+    }
+}
+
 final class SportActivitiesViewModel: ObservableObject {
     private var modelContext: ModelContext
     
-    private(set) var selectedDataStorageType: DataStorageType = .all
+    private(set) var selectedFilterType: SportActivityFilterType = .all
     @Published private(set) var sportActivities = [SportActivity]()
     
     init(modelContext: ModelContext) {
@@ -27,18 +41,27 @@ final class SportActivitiesViewModel: ObservableObject {
         }
     }
     
-    func filterSportActivities(by dataStorageType: DataStorageType = .all) {
+    func filterSportActivities(by filterType: SportActivityFilterType) {
         do {
-            selectedDataStorageType = dataStorageType
-            let dataStorageTypeRawValue = dataStorageType.rawValue // Workaround - cannot use another type/entity in predicate
+            selectedFilterType = filterType
+            let filterTypeRawValue = filterType.rawValue // Workaround - cannot use another type/entity in predicate
             
-            sportActivities = try modelContext.fetch(
-                FetchDescriptor<SportActivity>(
-                    predicate: #Predicate { activity in
-                        activity.dataStorageType == dataStorageTypeRawValue
-                    }
+            switch filterType {
+            case .all:
+                sportActivities = try modelContext.fetch(FetchDescriptor<SportActivity>())
+            case .local:
+                let dataStorageTypeLocalRawValue: Int = DataStorageType.local.rawValue
+                
+                sportActivities = try modelContext.fetch(
+                    FetchDescriptor<SportActivity>(predicate: #Predicate { $0.dataStorageType == dataStorageTypeLocalRawValue })
                 )
-            )
+            case .remote:
+                let dataStorageTypeRemoteRawValue: Int = DataStorageType.remote.rawValue
+                
+                sportActivities = try modelContext.fetch(
+                    FetchDescriptor<SportActivity>(predicate: #Predicate { $0.dataStorageType == dataStorageTypeRemoteRawValue })
+                )
+            }
         } catch {
             sportActivities = []
         }
