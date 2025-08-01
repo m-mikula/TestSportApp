@@ -10,11 +10,11 @@ import SwiftUI
 
 @main
 struct TestSportAppApp: App {    
-    let modelContainer: ModelContainer
+    private let modelContainer: ModelContainer
 
     var body: some Scene {
         WindowGroup {
-            SportActivitiesView(modelContext: modelContainer.mainContext)
+            SportActivitiesView(viewModel: SportActivitiesViewModel.init(modelContext: modelContainer.mainContext))
         }
         .modelContainer(modelContainer)
     }

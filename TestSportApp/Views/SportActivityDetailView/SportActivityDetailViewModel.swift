@@ -8,28 +8,16 @@
 import SwiftData
 import SwiftUI
 
-enum SportActivityDetailViewType {
-    case new, edit
-    
-    var navigationTitle: String {
-        switch self {
-        case .new: return "New activity"
-        case .edit: return "Edit activity"
-        }
-    }
-    
-    var saveButtonTitle: String {
-        switch self {
-        case .new, .edit: return "Save"
-        }
-    }
-}
-
 final class SportActivityDetailViewModel: ObservableObject {
+    @Published var activity: String = ""
+    @Published var location: String = ""
+    @Published var duration: Double = 0
+    @Published var dataStorageType: DataStorageType = .local
+    
     private var modelContext: ModelContext
     private var sportActivity: SportActivity
     
-    private(set) var type: SportActivityDetailViewType = .new
+    private(set) var type: SportActivityDetailViewType
     
     init(
         modelContext: ModelContext,
@@ -40,29 +28,19 @@ final class SportActivityDetailViewModel: ObservableObject {
         if let sportActivity = sportActivity {
             self.sportActivity = sportActivity
             
-            self.activity = sportActivity.activity
-            self.location = sportActivity.location
-            self.duration = sportActivity.duration
+            activity = sportActivity.activity
+            location = sportActivity.location
+            duration = sportActivity.duration
             
-            self.dataStorageType = DataStorageType(rawValue: sportActivity.dataStorageType) ?? .local
+            dataStorageType = DataStorageType(rawValue: sportActivity.dataStorageType) ?? .local
             
-            self.type = .edit
+            type = .edit
         } else {
-            self.sportActivity = SportActivity(
-                activity: "",
-                location: "",
-                duration: 0,
-                dataStorageType: DataStorageType.local.rawValue
-            )
+            self.sportActivity = SportActivity(activity: "", location: "", duration: 0, dataStorageType: DataStorageType.local.rawValue)
             
-            self.type = .new
+            type = .new
         }
     }
-    
-    @Published var activity: String = ""
-    @Published var location: String = ""
-    @Published var duration: Double = 0
-    @Published var dataStorageType: DataStorageType = .local
     
     var isSaveDisabled: Bool {
         switch type {
@@ -82,7 +60,9 @@ final class SportActivityDetailViewModel: ObservableObject {
         sportActivity.duration = duration
         sportActivity.dataStorageType = dataStorageType.rawValue
         
-        modelContext.insert(sportActivity)
+        if type == .new {
+            modelContext.insert(sportActivity)
+        }
         
         if modelContext.hasChanges {
             try? modelContext.save()

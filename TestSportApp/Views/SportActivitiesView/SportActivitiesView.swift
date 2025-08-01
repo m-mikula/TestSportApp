@@ -5,28 +5,22 @@
 //  Created by Martin Mikula on 29/07/2025.
 //
 
-import SwiftData
 import SwiftUI
 
 struct SportActivitiesView: View {
     @State private var isAddSportActivityViewPresented = false
+    @State private var searchedText = ""
     
-    private var modelContext: ModelContext
-    @StateObject private var viewModel: SportActivitiesViewModel
-    
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
-        _viewModel = StateObject(wrappedValue: SportActivitiesViewModel(modelContext: modelContext))
-    }
-    
+    @StateObject var viewModel: SportActivitiesViewModel
+
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(viewModel.sportActivities, id: \.id) { item in
+            List { 
+                ForEach(filteredSportActivities, id: \.id) { item in
                     let storageTypeColor: Color = DataStorageType(rawValue: item.dataStorageType)?.color ?? .clear
                     
                     NavigationLink {
-                        SportActivityDetailView(modelContext: modelContext, sportActivity: item)
+                        SportActivityDetailView(viewModel: SportActivityDetailViewModel(modelContext: viewModel.modelContext, sportActivity: item))
                     } label: {
                         let duration = ActivityDurationConverter.getDateComponentsFromDuration(item.duration)
                         
@@ -46,6 +40,7 @@ struct SportActivitiesView: View {
                 }
                 .onDelete(perform: viewModel.deleteSportActivities)
             }
+            .searchable(text: $searchedText, prompt: "Search activity...")
             .overlay(alignment: .center) {
                 if viewModel.sportActivities.isEmpty {
                     Text("No activities")
@@ -67,7 +62,7 @@ struct SportActivitiesView: View {
                     .sheet(isPresented: $isAddSportActivityViewPresented) {
                         viewModel.fetchAllSportActivities()
                     } content: {
-                        SportActivityDetailView(modelContext: modelContext)
+                        SportActivityDetailView(viewModel: SportActivityDetailViewModel(modelContext: viewModel.modelContext))
                             .interactiveDismissDisabled(true)
                     }
 
@@ -92,8 +87,18 @@ struct SportActivitiesView: View {
     }
 }
 
+private extension SportActivitiesView {
+    var filteredSportActivities: [SportActivity] {
+        if searchedText.isEmpty {
+            return viewModel.sportActivities
+        } else {
+            return viewModel.sportActivities.filter { $0.activity.localizedStandardContains(searchedText) }
+        }
+    }
+}
+
 #Preview {
     let modelContainer = LocalDataManager.getModelContainer()
     
-    SportActivitiesView(modelContext: modelContainer.mainContext)
+    SportActivitiesView(viewModel: SportActivitiesViewModel(modelContext: modelContainer.mainContext))
 }

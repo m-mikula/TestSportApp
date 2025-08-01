@@ -5,20 +5,12 @@
 //  Created by Martin Mikula on 29/07/2025.
 //
 
-import SwiftData
 import SwiftUI
 
 struct SportActivityDetailView: View {
-    @Environment(\.dismiss) var dismiss
+    @Environment(\.dismiss) private var dismiss
     
-    @StateObject private var viewModel: SportActivityDetailViewModel
-    
-    init(
-        modelContext: ModelContext,
-        sportActivity: SportActivity? = nil
-    ) {
-        _viewModel = StateObject(wrappedValue: SportActivityDetailViewModel(modelContext: modelContext, sportActivity: sportActivity))
-    }
+    @StateObject var viewModel: SportActivityDetailViewModel
     
     var body: some View {
         NavigationStack {
@@ -38,7 +30,7 @@ struct SportActivityDetailView: View {
                         labelTitle: "Location",
                         labelSystemImage: "map"
                     )
-                    ActivityDurationPickerView(duration: $viewModel.duration)
+                    ActivityDurationPickerView(viewModel: ActivityDurationPickerViewModel(duration: $viewModel.duration))
                     DataStoragePickerView(selectedDataStorageType: $viewModel.dataStorageType)
                 }
                 .padding()
@@ -69,5 +61,5 @@ struct SportActivityDetailView: View {
 #Preview {
     let modelContainer = LocalDataManager.getModelContainer()
     
-    SportActivityDetailView(modelContext: modelContainer.mainContext)
+    SportActivityDetailView(viewModel: SportActivityDetailViewModel(modelContext: modelContainer.mainContext))
 }

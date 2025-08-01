@@ -8,22 +8,8 @@
 import SwiftData
 import SwiftUI
 
-enum SportActivityFilterType: Int, CaseIterable {
-    case all
-    case local
-    case remote
-    
-    var title: String {
-        switch self {
-        case .all: return "All"
-        case .local: return "Local"
-        case .remote: return "Remote"
-        }
-    }
-}
-
 final class SportActivitiesViewModel: ObservableObject {
-    private var modelContext: ModelContext
+    var modelContext: ModelContext
     
     private(set) var selectedFilterType: SportActivityFilterType = .all
     @Published private(set) var sportActivities = [SportActivity]()
@@ -44,8 +30,8 @@ final class SportActivitiesViewModel: ObservableObject {
     func filterSportActivities(by filterType: SportActivityFilterType) {
         do {
             selectedFilterType = filterType
-            let filterTypeRawValue = filterType.rawValue // Workaround - cannot use another type/entity in predicate
             
+            // Workaround with raw values, because we cannot use another type/entity in predicate.
             switch filterType {
             case .all:
                 sportActivities = try modelContext.fetch(FetchDescriptor<SportActivity>())

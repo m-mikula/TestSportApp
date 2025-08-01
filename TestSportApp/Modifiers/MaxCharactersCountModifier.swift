@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct MaxCharactersCountModifier: ViewModifier {
+fileprivate struct MaxCharactersCountModifier: ViewModifier {
     @Binding var text: String
     let maxCount: Int
     
