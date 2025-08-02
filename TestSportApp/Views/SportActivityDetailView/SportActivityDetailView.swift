@@ -8,9 +8,15 @@
 import SwiftUI
 
 struct SportActivityDetailView: View {
-    @Environment(\.dismiss) private var dismiss
+    @State private var isShowingErrorAlert = false
+    @State private var errorMessage = ""
     
-    @StateObject var viewModel: SportActivityDetailViewModel
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel: SportActivityDetailViewModel
+    
+    init(dataStorageManager: DataStorageManager, sportActivity: SportActivity? = nil) {
+        _viewModel = StateObject(wrappedValue: SportActivityDetailViewModel(dataStorageManager: dataStorageManager, sportActivity: sportActivity))
+    }
     
     var body: some View {
         NavigationStack {
@@ -45,12 +51,27 @@ struct SportActivityDetailView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(viewModel.type.saveButtonTitle) {
-                        viewModel.saveActivity()
-                        dismiss()
+                        Task {
+                            do {
+                                try await viewModel.saveActivity()
+                                dismiss()
+                            } catch let error as DataStorageManagerError {
+                                errorMessage = error.customErrorMessage
+                                isShowingErrorAlert = true
+                            } catch let error {
+                                errorMessage = error.localizedDescription
+                                isShowingErrorAlert = true
+                            }
+                        }
                     }
                     .disabled(viewModel.isSaveDisabled)
                 }
             }
+            .alert("Error", isPresented: $isShowingErrorAlert, actions: {
+                Button("OK", role: .cancel) {}
+            }, message: {
+                Text(errorMessage)
+            })
             .navigationTitle(viewModel.type.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .scrollBounceBehavior(.basedOnSize)
@@ -60,6 +81,7 @@ struct SportActivityDetailView: View {
 
 #Preview {
     let modelContainer = LocalDataManager.getModelContainer()
+    let dataStoreManager = DataStorageManager(modelContext: modelContainer.mainContext)
     
-    SportActivityDetailView(viewModel: SportActivityDetailViewModel(modelContext: modelContainer.mainContext))
+    SportActivityDetailView(dataStorageManager: dataStoreManager, sportActivity: nil)
 }

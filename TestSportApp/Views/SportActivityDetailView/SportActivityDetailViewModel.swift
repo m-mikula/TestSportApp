@@ -5,25 +5,20 @@
 //  Created by Martin Mikula on 30/07/2025.
 //
 
-import SwiftData
 import SwiftUI
 
-final class SportActivityDetailViewModel: ObservableObject {
+@MainActor final class SportActivityDetailViewModel: ObservableObject {
     @Published var activity: String = ""
     @Published var location: String = ""
     @Published var duration: Double = 0
     @Published var dataStorageType: DataStorageType = .local
     
-    private var modelContext: ModelContext
     private var sportActivity: SportActivity
+    private let dataStorageManager: DataStorageManager
+    @Published private(set) var type: SportActivityDetailViewType = .new
     
-    private(set) var type: SportActivityDetailViewType
-    
-    init(
-        modelContext: ModelContext,
-        sportActivity: SportActivity? = nil
-    ) {
-        self.modelContext = modelContext
+    init(dataStorageManager: DataStorageManager, sportActivity: SportActivity? = nil) {
+        self.dataStorageManager = dataStorageManager
         
         if let sportActivity = sportActivity {
             self.sportActivity = sportActivity
@@ -36,7 +31,13 @@ final class SportActivityDetailViewModel: ObservableObject {
             
             type = .edit
         } else {
-            self.sportActivity = SportActivity(activity: "", location: "", duration: 0, dataStorageType: DataStorageType.local.rawValue)
+            self.sportActivity = SportActivity(
+                activity: "",
+                location: "",
+                duration: 0,
+                dataStorageType: DataStorageType.local.rawValue,
+                timestamp: Date().timeIntervalSinceReferenceDate
+            )
             
             type = .new
         }
@@ -54,18 +55,13 @@ final class SportActivityDetailViewModel: ObservableObject {
         }
     }
     
-    func saveActivity() {
+    func saveActivity() async throws {
         sportActivity.activity = activity
         sportActivity.location = location
         sportActivity.duration = duration
         sportActivity.dataStorageType = dataStorageType.rawValue
+        sportActivity.timestamp = Date().timeIntervalSinceReferenceDate
         
-        if type == .new {
-            modelContext.insert(sportActivity)
-        }
-        
-        if modelContext.hasChanges {
-            try? modelContext.save()
-        }
+        try await dataStorageManager.saveSportActivity(sportActivity: sportActivity, isNewSportActivity: type == .new)
     }
 }

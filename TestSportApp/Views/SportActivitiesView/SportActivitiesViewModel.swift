@@ -5,62 +5,44 @@
 //  Created by Martin Mikula on 30/07/2025.
 //
 
-import SwiftData
 import SwiftUI
 
-final class SportActivitiesViewModel: ObservableObject {
-    var modelContext: ModelContext
+@MainActor final class SportActivitiesViewModel: ObservableObject {
+    @Published var searchedText = ""
+    @Published var selectedFilterType: SportActivityFilterType = .all
+    @Published private var allSportActivities = [SportActivity]()
     
-    private(set) var selectedFilterType: SportActivityFilterType = .all
-    @Published private(set) var sportActivities = [SportActivity]()
+    private let dataStorageManager: DataStorageManager
     
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
-        fetchAllSportActivities()
+    init(dataStorageManager: DataStorageManager) {
+        self.dataStorageManager = dataStorageManager
     }
     
-    func fetchAllSportActivities() {
-        do {
-            sportActivities = try modelContext.fetch(FetchDescriptor<SportActivity>())
-        } catch {
-            sportActivities = []
-        }
+    var listSportActivities: [SportActivity] {
+        searchedText.isEmpty ? filteredSportActivities : filteredSportActivities.filter { $0.activity.localizedStandardContains(searchedText) }
     }
     
-    func filterSportActivities(by filterType: SportActivityFilterType) {
-        do {
-            selectedFilterType = filterType
-            
-            // Workaround with raw values, because we cannot use another type/entity in predicate.
-            switch filterType {
+    private var filteredSportActivities: [SportActivity] {
+        allSportActivities.filter { activity in
+            switch selectedFilterType {
             case .all:
-                sportActivities = try modelContext.fetch(FetchDescriptor<SportActivity>())
+                return true
             case .local:
-                let dataStorageTypeLocalRawValue: Int = DataStorageType.local.rawValue
-                
-                sportActivities = try modelContext.fetch(
-                    FetchDescriptor<SportActivity>(predicate: #Predicate { $0.dataStorageType == dataStorageTypeLocalRawValue })
-                )
+                return activity.dataStorageType == DataStorageType.local.rawValue
             case .remote:
-                let dataStorageTypeRemoteRawValue: Int = DataStorageType.remote.rawValue
-                
-                sportActivities = try modelContext.fetch(
-                    FetchDescriptor<SportActivity>(predicate: #Predicate { $0.dataStorageType == dataStorageTypeRemoteRawValue })
-                )
+                return activity.dataStorageType == DataStorageType.remote.rawValue
             }
-        } catch {
-            sportActivities = []
         }
     }
     
-    func deleteSportActivities(offsets: IndexSet) {
+    func fetchAllSportActivities() async throws {
+        allSportActivities = try await dataStorageManager.fetchAllSportActivities()
+    }
+    
+    func deleteSportActivities(offsets: IndexSet) async throws {
         for index in offsets {
-            modelContext.delete(sportActivities[index])
-            
-            if modelContext.hasChanges {
-                try? modelContext.save()
-            }
+            try await dataStorageManager.deleteSportActivity(sportActivity: allSportActivities[index])
+            allSportActivities.remove(at: index)
         }
-        fetchAllSportActivities()
     }
 }

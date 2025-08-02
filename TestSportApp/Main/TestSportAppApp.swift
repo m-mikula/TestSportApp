@@ -9,32 +9,17 @@ import SwiftData
 import SwiftUI
 
 @main
-struct TestSportAppApp: App {    
-    private let modelContainer: ModelContainer
-
+struct TestSportAppApp: App {
+    @StateObject private var dataStorageManager: DataStorageManager
+    
     var body: some Scene {
         WindowGroup {
-            SportActivitiesView(viewModel: SportActivitiesViewModel.init(modelContext: modelContainer.mainContext))
+            SportActivitiesView(dataStorageManager: dataStorageManager)
         }
-        .modelContainer(modelContainer)
     }
     
     init() {
-        modelContainer = LocalDataManager.getModelContainer()
-    }
-}
-
-struct LocalDataManager {
-    static func getModelContainer() -> ModelContainer {
-        let schema = Schema([
-            SportActivity.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
+        let modelContainer = LocalDataManager.getModelContainer()
+        _dataStorageManager = StateObject(wrappedValue: DataStorageManager(modelContext: modelContainer.mainContext))
     }
 }

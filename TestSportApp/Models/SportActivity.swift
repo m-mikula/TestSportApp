@@ -16,16 +16,19 @@ final class SportActivity: Identifiable {
     var location: String
     var duration: Double
     var dataStorageType: Int
+    var timestamp: Double
     
     init(
         activity: String,
         location: String,
         duration: Double,
-        dataStorageType: Int
+        dataStorageType: Int,
+        timestamp: Double
     ) {
         self.activity = activity
         self.location = location
         self.duration = duration
         self.dataStorageType = dataStorageType
+        self.timestamp = timestamp
     }
 }

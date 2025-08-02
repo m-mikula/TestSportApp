@@ -9,47 +9,45 @@ import SwiftUI
 
 struct SportActivitiesView: View {
     @State private var isAddSportActivityViewPresented = false
-    @State private var searchedText = ""
-    
-    @StateObject var viewModel: SportActivitiesViewModel
+    @State private var isLoadingData = false
+    @StateObject private var viewModel: SportActivitiesViewModel
+    private var dataStorageManager: DataStorageManager
 
+    init(dataStorageManager: DataStorageManager) {
+        self.dataStorageManager = dataStorageManager
+        _viewModel = StateObject(wrappedValue: SportActivitiesViewModel(dataStorageManager: dataStorageManager))
+    }
+    
     var body: some View {
         NavigationStack {
-            List { 
-                ForEach(filteredSportActivities, id: \.id) { item in
-                    let storageTypeColor: Color = DataStorageType(rawValue: item.dataStorageType)?.color ?? .clear
-                    
-                    NavigationLink {
-                        SportActivityDetailView(viewModel: SportActivityDetailViewModel(modelContext: viewModel.modelContext, sportActivity: item))
-                    } label: {
-                        let duration = ActivityDurationConverter.getDateComponentsFromDuration(item.duration)
-                        
-                        HStack(spacing: 8) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .frame(width: 8)
-                                .foregroundStyle(storageTypeColor)
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(item.activity)
-                                    .font(.headline)
-                                Text(item.location)
-                                Text("\(duration?.day ?? 0) d \(duration?.hour ?? 0) h \(duration?.minute ?? 0) m")
-                            }
-                        }
-                    }
+            ZStack {
+                sportActivitiesListView
+                
+                if isLoadingData {
+                    ProgressView("Loading...")
+                        .frame(width: 150, height: 100)
+                        .background(.gray.opacity(0.5))
+                        .scaleEffect(1.7)
+                        .font(.caption)
+                        .foregroundStyle(.white)
+                        .tint(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(radius: 2)
                 }
-                .onDelete(perform: viewModel.deleteSportActivities)
             }
-            .searchable(text: $searchedText, prompt: "Search activity...")
+            .task {
+                fetchAllData()
+            }
+            .searchable(text: $viewModel.searchedText, prompt: "Search activity...")
             .overlay(alignment: .center) {
-                if viewModel.sportActivities.isEmpty {
+                if viewModel.listSportActivities.isEmpty && isLoadingData == false {
                     Text("No activities")
                         .font(.title2)
                         .foregroundStyle(.gray)
                 }
             }
             .refreshable {
-                viewModel.fetchAllSportActivities()
+                fetchAllData()
             }
             .navigationTitle("Activities")
             .toolbar {
@@ -60,18 +58,17 @@ struct SportActivitiesView: View {
                         Image(systemName: "plus")
                     }
                     .sheet(isPresented: $isAddSportActivityViewPresented) {
-                        viewModel.fetchAllSportActivities()
+                        fetchAllData()
                     } content: {
-                        SportActivityDetailView(viewModel: SportActivityDetailViewModel(modelContext: viewModel.modelContext))
+                        SportActivityDetailView(dataStorageManager: dataStorageManager)
                             .interactiveDismissDisabled(true)
                     }
-
                 }
                 ToolbarItem {
                     Menu("Storage filter") {
                         ForEach(SportActivityFilterType.allCases, id: \.self) { filterType in
                             Button {
-                                viewModel.filterSportActivities(by: filterType)
+                                viewModel.selectedFilterType = filterType
                             } label: {
                                 if viewModel.selectedFilterType == filterType {
                                     Label(filterType.title, systemImage: "checkmark")
@@ -88,17 +85,50 @@ struct SportActivitiesView: View {
 }
 
 private extension SportActivitiesView {
-    var filteredSportActivities: [SportActivity] {
-        if searchedText.isEmpty {
-            return viewModel.sportActivities
-        } else {
-            return viewModel.sportActivities.filter { $0.activity.localizedStandardContains(searchedText) }
+    var sportActivitiesListView: some View {
+        List {
+            ForEach(viewModel.listSportActivities, id: \.id) { item in
+                let storageTypeColor: Color = DataStorageType(rawValue: item.dataStorageType)?.color ?? .clear
+                
+                NavigationLink {
+                    SportActivityDetailView(dataStorageManager: dataStorageManager, sportActivity: item)
+                } label: {
+                    let duration = ActivityDurationConverter.getDateComponentsFromDuration(item.duration)
+                    
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .frame(width: 8)
+                            .foregroundStyle(storageTypeColor)
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(item.activity)
+                                .font(.headline)
+                            Text(item.location)
+                            Text("\(duration?.day ?? 0) d \(duration?.hour ?? 0) h \(duration?.minute ?? 0) m")
+                        }
+                    }
+                }
+            }
+            .onDelete { indexSet in
+                Task {
+                    try await viewModel.deleteSportActivities(offsets: indexSet)
+                }
+            }
+        }
+    }
+    
+    func fetchAllData() {
+        Task {
+            isLoadingData = true
+            try await viewModel.fetchAllSportActivities()
+            isLoadingData = false
         }
     }
 }
 
 #Preview {
     let modelContainer = LocalDataManager.getModelContainer()
+    let dataStorageManager = DataStorageManager(modelContext: modelContainer.mainContext)
     
-    SportActivitiesView(viewModel: SportActivitiesViewModel(modelContext: modelContainer.mainContext))
+    SportActivitiesView(dataStorageManager: dataStorageManager)
 }
