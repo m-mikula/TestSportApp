@@ -7,19 +7,23 @@
 
 import SwiftData
 import SwiftUI
+import FirebaseCore
+
+private class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        FirebaseApp.configure()
+        return true
+    }
+}
 
 @main
 struct TestSportAppApp: App {
-    @StateObject private var dataStorageManager: DataStorageManager
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+    @StateObject private var dataStorageManager = DataStorageManager()
     
     var body: some Scene {
         WindowGroup {
             SportActivitiesView(dataStorageManager: dataStorageManager)
         }
-    }
-    
-    init() {
-        let modelContainer = LocalDataManager.getModelContainer()
-        _dataStorageManager = StateObject(wrappedValue: DataStorageManager(modelContext: modelContainer.mainContext))
     }
 }

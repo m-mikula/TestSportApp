@@ -127,8 +127,5 @@ private extension SportActivitiesView {
 }
 
 #Preview {
-    let modelContainer = LocalDataManager.getModelContainer()
-    let dataStorageManager = DataStorageManager(modelContext: modelContainer.mainContext)
-    
-    SportActivitiesView(dataStorageManager: dataStorageManager)
+    SportActivitiesView(dataStorageManager: DataStorageManager())
 }

@@ -9,22 +9,19 @@ import SwiftData
 import SwiftUI
 
 @MainActor final class DataStorageManager: ObservableObject {
-    let modelContext: ModelContext
-    
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
-    }
+    private let localDataManager = LocalDataManager()
+    private let remoteDataManager = RemoteDataManager()
     
     func fetchAllSportActivities() async throws -> [SportActivity] {
         var allSportActivities = [SportActivity]()
         
-        let localSportActivities: [SportActivity] = try modelContext.fetch(FetchDescriptor<SportActivity>())
+        let localSportActivities: [SportActivity] = try localDataManager.fetchAllSportActivities()
         allSportActivities.append(contentsOf: localSportActivities)
         
-        let remoteSportActivities: [SportActivity] = []
+        let remoteSportActivities: [SportActivity] = try await remoteDataManager.fetchAllSportActivities()
         allSportActivities.append(contentsOf: remoteSportActivities)
         
-        return allSportActivities.sorted(by: { $0.timestamp < $1.timestamp })
+        return allSportActivities.sorted(by: { $0.timestamp > $1.timestamp })
     }
     
     func saveSportActivity(sportActivity: SportActivity, isNewSportActivity: Bool = false) async throws {
@@ -32,16 +29,9 @@ import SwiftUI
         
         switch storageType {
         case .local:
-            if isNewSportActivity {
-                modelContext.insert(sportActivity)
-            }
-            
-            if modelContext.hasChanges {
-                try modelContext.save()
-            }
+            try localDataManager.saveSportActivity(sportActivity: sportActivity, isNewSportActivity: isNewSportActivity)
         case .remote:
-            
-            throw DataStorageManagerError.remoteItemCouldNotBeSaved
+            try await remoteDataManager.saveSportActivity(sportActivity: sportActivity, isNewSportActivity: isNewSportActivity)
         }
     }
     
@@ -50,14 +40,9 @@ import SwiftUI
         
         switch storageType {
         case .local:
-            modelContext.delete(sportActivity)
-            
-            if modelContext.hasChanges {
-                try modelContext.save()
-            }
+            try localDataManager.deleteSportActivity(sportActivity: sportActivity)
         case .remote:
-            
-            throw DataStorageManagerError.remoteItemCouldNotBeDeleted
+            try await remoteDataManager.deleteSportActivity(sportActivity: sportActivity)
         }
     }
 }

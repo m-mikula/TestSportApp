@@ -37,7 +37,30 @@ struct SportActivityDetailView: View {
                         labelSystemImage: "map"
                     )
                     ActivityDurationPickerView(viewModel: ActivityDurationPickerViewModel(duration: $viewModel.duration))
-                    DataStoragePickerView(selectedDataStorageType: $viewModel.dataStorageType)
+                    
+                    if viewModel.type == .new {
+                        DataStoragePickerView(selectedDataStorageType: $viewModel.dataStorageType)
+                    } else {
+                        HStack {
+                            Text("Selected data storage:")
+                                .font(.subheadline)
+                                .foregroundStyle(.gray)
+                            
+                            Spacer()
+                            
+                            Text("\(viewModel.dataStorageType.title.uppercased())")
+                                .padding(EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18))
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                                .background(viewModel.dataStorageType.color)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .padding(.all, 12)
+                        .overlay(alignment: .center, content: {
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray, lineWidth: 0.2)
+                        })
+                    }
                 }
                 .padding()
             }
@@ -80,8 +103,5 @@ struct SportActivityDetailView: View {
 }
 
 #Preview {
-    let modelContainer = LocalDataManager.getModelContainer()
-    let dataStoreManager = DataStorageManager(modelContext: modelContainer.mainContext)
-    
-    SportActivityDetailView(dataStorageManager: dataStoreManager, sportActivity: nil)
+    SportActivityDetailView(dataStorageManager: DataStorageManager(), sportActivity: nil)
 }
